@@ -415,6 +415,75 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 		routes = append(routes, sr)
 	}
 
+	// queries
+	mdl := reflect.New(rt).Interface().(orm.DataModel)
+	queries := mdl.Queries()
+	for queryName, _ := range queries {
+		getName := fmt.Sprintf("GetBy" + queryName)
+		getsName := fmt.Sprintf("GetsBy" + queryName)
+		findName := fmt.Sprintf("FindBy" + queryName)
+
+		if !codekit.HasMember(disabledRoutes, getName) {
+			sr = new(kaos.ServiceRoute)
+			sr.Path = filepath.Join(svc.BasePoint(), alias, getName)
+			sr.Path = strings.Replace(sr.Path, "\\", "/", -1)
+			sr.RequestType = reflect.TypeOf([]interface{}{})
+			sr.ResponseType = reflect.TypeOf(reflect.PtrTo(rt))
+			sr.Fn = reflect.ValueOf(func(ctx *kaos.Context, param codekit.M) (orm.DataModel, error) {
+				dm := getDataModel(model)
+				e := h.GetByQuery(dm, queryName, param)
+				return dm, e
+			})
+			routes = append(routes, sr)
+		}
+
+		if !codekit.HasMember(disabledRoutes, getsName) {
+			sr = new(kaos.ServiceRoute)
+			sr.Path = filepath.Join(svc.BasePoint(), alias, getsName)
+			sr.Path = strings.Replace(sr.Path, "\\", "/", -1)
+			sr.RequestType = reflect.TypeOf(new(dbflex.QueryParam))
+			sr.ResponseType = reflect.PtrTo(reflect.SliceOf(rt))
+			sr.Fn = reflect.ValueOf(func(ctx *kaos.Context, param codekit.M) (interface{}, error) {
+				mdl := reflect.New(rt).Interface().(orm.DataModel)
+				dest := reflect.New(reflect.SliceOf(rt)).Interface()
+
+				e := h.GetsByQuery(mdl, queryName, param, dest)
+				if e != nil {
+					return nil, e
+				}
+
+				connIndex, conn, _ := h.GetConnection()
+				defer h.CloseConnection(connIndex, conn)
+				recordCount, _ := orm.CountQuery(conn, mdl, queryName, param)
+
+				m := codekit.M{}.Set("data", dest).Set("count", recordCount)
+				model.CallHook("PostGets", ctx, m)
+				return m, nil
+			})
+			routes = append(routes, sr)
+		}
+
+		if !codekit.HasMember(disabledRoutes, findName) {
+			sr = new(kaos.ServiceRoute)
+			sr.Path = filepath.Join(svc.BasePoint(), alias, findName)
+			sr.Path = strings.Replace(sr.Path, "\\", "/", -1)
+			sr.RequestType = reflect.TypeOf(new(dbflex.QueryParam))
+			sr.ResponseType = reflect.PtrTo(reflect.SliceOf(rt))
+			sr.Fn = reflect.ValueOf(func(ctx *kaos.Context, parm codekit.M) (interface{}, error) {
+				mdl := reflect.New(rt).Interface().(orm.DataModel)
+				dest := reflect.New(reflect.SliceOf(rt)).Interface()
+				// get data
+				e := h.GetsByQuery(mdl, queryName, parm, dest)
+				if e != nil {
+					return nil, e
+				}
+				model.CallHook("PostFind", ctx, dest)
+				return dest, nil
+			})
+			routes = append(routes, sr)
+		}
+	}
+
 	return routes, nil
 }
 
