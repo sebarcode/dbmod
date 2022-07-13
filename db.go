@@ -418,12 +418,12 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 	// queries
 	mdl := reflect.New(rt).Interface().(orm.DataModel)
 	queries := mdl.Queries()
-	for queryName, _ := range queries {
+	for queryName, q := range queries {
 		getName := fmt.Sprintf("GetBy" + queryName)
 		getsName := fmt.Sprintf("GetsBy" + queryName)
 		findName := fmt.Sprintf("FindBy" + queryName)
 
-		if !codekit.HasMember(disabledRoutes, getName) {
+		if !codekit.HasMember(disabledRoutes, getName) && q.ReturnKind != string(orm.ReturnMulti) {
 			sr = new(kaos.ServiceRoute)
 			sr.Path = filepath.Join(svc.BasePoint(), alias, getName)
 			sr.Path = strings.Replace(sr.Path, "\\", "/", -1)
@@ -437,7 +437,7 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 			routes = append(routes, sr)
 		}
 
-		if !codekit.HasMember(disabledRoutes, getsName) {
+		if !codekit.HasMember(disabledRoutes, getsName) && q.ReturnKind != string(orm.ReturnSingle) {
 			sr = new(kaos.ServiceRoute)
 			sr.Path = filepath.Join(svc.BasePoint(), alias, getsName)
 			sr.Path = strings.Replace(sr.Path, "\\", "/", -1)
@@ -463,7 +463,7 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 			routes = append(routes, sr)
 		}
 
-		if !codekit.HasMember(disabledRoutes, findName) {
+		if !codekit.HasMember(disabledRoutes, findName) && q.ReturnKind != string(orm.ReturnSingle) {
 			sr = new(kaos.ServiceRoute)
 			sr.Path = filepath.Join(svc.BasePoint(), alias, findName)
 			sr.Path = strings.Replace(sr.Path, "\\", "/", -1)
