@@ -427,7 +427,7 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 			sr = new(kaos.ServiceRoute)
 			sr.Path = filepath.Join(svc.BasePoint(), alias, getName)
 			sr.Path = strings.Replace(sr.Path, "\\", "/", -1)
-			sr.RequestType = reflect.TypeOf([]interface{}{})
+			sr.RequestType = reflect.TypeOf(codekit.M{})
 			sr.ResponseType = reflect.TypeOf(reflect.PtrTo(rt))
 			sr.Fn = reflect.ValueOf(func(ctx *kaos.Context, param codekit.M) (orm.DataModel, error) {
 				dm := getDataModel(model)
@@ -441,7 +441,7 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 			sr = new(kaos.ServiceRoute)
 			sr.Path = filepath.Join(svc.BasePoint(), alias, getsName)
 			sr.Path = strings.Replace(sr.Path, "\\", "/", -1)
-			sr.RequestType = reflect.TypeOf(new(dbflex.QueryParam))
+			sr.RequestType = reflect.TypeOf(codekit.M{})
 			sr.ResponseType = reflect.PtrTo(reflect.SliceOf(rt))
 			sr.Fn = reflect.ValueOf(func(ctx *kaos.Context, param codekit.M) (interface{}, error) {
 				mdl := reflect.New(rt).Interface().(orm.DataModel)
@@ -467,7 +467,7 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 			sr = new(kaos.ServiceRoute)
 			sr.Path = filepath.Join(svc.BasePoint(), alias, findName)
 			sr.Path = strings.Replace(sr.Path, "\\", "/", -1)
-			sr.RequestType = reflect.TypeOf(new(dbflex.QueryParam))
+			sr.RequestType = reflect.TypeOf(codekit.M{})
 			sr.ResponseType = reflect.PtrTo(reflect.SliceOf(rt))
 			sr.Fn = reflect.ValueOf(func(ctx *kaos.Context, parm codekit.M) (interface{}, error) {
 				mdl := reflect.New(rt).Interface().(orm.DataModel)
