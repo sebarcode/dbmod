@@ -17,6 +17,7 @@ import (
 )
 
 type mod struct {
+	hubFn func(ctx *kaos.Context) *datahub.Hub
 }
 
 var (
@@ -25,6 +26,18 @@ var (
 
 func New() *mod {
 	return new(mod)
+}
+
+func (m *mod) getHub(ctx *kaos.Context) *datahub.Hub {
+	if m.hubFn == nil {
+		h, _ := ctx.DefaultHub()
+		return h
+	}
+	return m.hubFn(ctx)
+}
+
+func (m *mod) SetHubName(fn func(ctx *kaos.Context) *datahub.Hub) {
+	m.hubFn = fn
 }
 
 func (m *mod) Name() string {
@@ -65,10 +78,12 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 	rt := model.ModelType
 	alias := model.Name
 
-	h, e := svc.GetDataHub(model.HubName())
-	if e != nil {
-		return routes, e
-	}
+	/*
+		h, e := svc.GetDataHub(model.HubName())
+		if e != nil {
+			return routes, e
+		}
+	*/
 
 	var sr *kaos.ServiceRoute
 	disabledRoutes := model.DisableRoutes()
@@ -95,6 +110,7 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 		sr.RequestType = reflect.TypeOf(new(dbflex.QueryParam))
 		sr.ResponseType = reflect.PtrTo(reflect.SliceOf(rt))
 		sr.Fn = reflect.ValueOf(func(ctx *kaos.Context, parm *dbflex.QueryParam) (interface{}, error) {
+			h := m.getHub(ctx)
 			parm = combineQueryParamFromCtx(parm, ctx)
 
 			// if from http request and has query
@@ -170,6 +186,7 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 			}
 
 			// get data
+			h := m.getHub(ctx)
 			e := h.Gets(mdl, parm, dest)
 			if e != nil {
 				return nil, e
@@ -188,6 +205,7 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 		sr.RequestType = reflect.TypeOf([]interface{}{})
 		sr.ResponseType = reflect.TypeOf(reflect.PtrTo(rt))
 		sr.Fn = reflect.ValueOf(func(ctx *kaos.Context, keys []interface{}) (orm.DataModel, error) {
+			h := m.getHub(ctx)
 			dm := getDataModel(model)
 			e := h.GetByID(dm, keys...)
 
@@ -213,6 +231,7 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 		sr.RequestType = reflect.TypeOf(model.Model)
 		sr.ResponseType = reflect.TypeOf(model.Model)
 		sr.Fn = reflect.ValueOf(func(ctx *kaos.Context, dm orm.DataModel) (orm.DataModel, error) {
+			h := m.getHub(ctx)
 			var (
 				e  error
 				tx *datahub.Hub
@@ -265,6 +284,8 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 		sr.RequestType = reflect.TypeOf(model.Model)
 		sr.ResponseType = reflect.TypeOf(model.Model)
 		sr.Fn = reflect.ValueOf(func(ctx *kaos.Context, dm orm.DataModel) (orm.DataModel, error) {
+			h := m.getHub(ctx)
+
 			var (
 				e  error
 				tx *datahub.Hub
@@ -308,6 +329,8 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 		sr.RequestType = reflect.TypeOf(model.Model)
 		sr.ResponseType = reflect.TypeOf(model.Model)
 		sr.Fn = reflect.ValueOf(func(ctx *kaos.Context, dm orm.DataModel) (orm.DataModel, error) {
+			h := m.getHub(ctx)
+
 			var (
 				e  error
 				tx *datahub.Hub
@@ -351,6 +374,8 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 		sr.RequestType = reflect.TypeOf(model.Model)
 		//sr.ResponseType = reflect.TypeOf(int(0))
 		sr.Fn = reflect.ValueOf(func(ctx *kaos.Context, dm orm.DataModel) (int, error) {
+			h := m.getHub(ctx)
+
 			if dmIsNil(dm) {
 				return 0, fmt.Errorf("data is nil")
 			}
@@ -394,6 +419,8 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 		sr.RequestType = reflect.TypeOf(new(dbflex.Filter))
 		sr.ResponseType = reflect.TypeOf(int(0))
 		sr.Fn = reflect.ValueOf(func(ctx *kaos.Context, where *dbflex.Filter) (int, error) {
+			h := m.getHub(ctx)
+
 			where = combineFilterFromCtx(where, ctx)
 			dm := getDataModel(model)
 			if e := model.CallHook("PreDeleteQuery", ctx, where); e != nil {
@@ -427,6 +454,8 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 		// sr.RequestType = reflect.TypeOf(new(dbflex.Filter))
 		sr.ResponseType = reflect.TypeOf(int(0))
 		sr.Fn = reflect.ValueOf(func(ctx *kaos.Context, idValues [][]interface{}) (int, error) {
+			h := m.getHub(ctx)
+
 			for _, idValue := range idValues {
 				dm := getDataModel(model)
 				dm.SetID(idValue...)
@@ -465,6 +494,8 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 			sr.RequestType = reflect.TypeOf(codekit.M{})
 			sr.ResponseType = reflect.TypeOf(reflect.PtrTo(rt))
 			sr.Fn = reflect.ValueOf(func(ctx *kaos.Context, param codekit.M) (orm.DataModel, error) {
+				h := m.getHub(ctx)
+
 				dm := getDataModel(model)
 				e := h.GetByQuery(dm, queryName, param)
 				return dm, e
@@ -479,6 +510,8 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 			sr.RequestType = reflect.TypeOf(codekit.M{})
 			sr.ResponseType = reflect.PtrTo(reflect.SliceOf(rt))
 			sr.Fn = reflect.ValueOf(func(ctx *kaos.Context, param codekit.M) (interface{}, error) {
+				h := m.getHub(ctx)
+
 				mdl := reflect.New(rt).Interface().(orm.DataModel)
 				dest := reflect.New(reflect.SliceOf(rt)).Interface()
 
@@ -505,6 +538,8 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 			sr.RequestType = reflect.TypeOf(codekit.M{})
 			sr.ResponseType = reflect.PtrTo(reflect.SliceOf(rt))
 			sr.Fn = reflect.ValueOf(func(ctx *kaos.Context, parm codekit.M) (interface{}, error) {
+				h := m.getHub(ctx)
+
 				mdl := reflect.New(rt).Interface().(orm.DataModel)
 				dest := reflect.New(reflect.SliceOf(rt)).Interface()
 				// get data
