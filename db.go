@@ -3,6 +3,7 @@ package dbmod
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -96,6 +97,22 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 		sr.Fn = reflect.ValueOf(func(ctx *kaos.Context, parm *dbflex.QueryParam) (interface{}, error) {
 			parm = combineQueryParamFromCtx(parm, ctx)
 
+			// if from http request and has query
+			if hr, ok := ctx.Data().Get("http_request", nil).(*http.Request); ok {
+				queryValues := hr.URL.Query()
+				fs := []*dbflex.Filter{}
+				for k, vs := range queryValues {
+					if len(vs) > 0 {
+						fs = append(fs, dbflex.Eq(k, vs[0]))
+					}
+				}
+				if len(fs) == 1 {
+					parm = combineQueryParam(parm, dbflex.NewQueryParam().SetWhere(fs[0]))
+				} else if len(fs) > 1 {
+					parm = combineQueryParam(parm, dbflex.NewQueryParam().SetWhere(dbflex.And(fs...)))
+				}
+			}
+
 			mdl := reflect.New(rt).Interface().(orm.DataModel)
 			dest := reflect.New(reflect.SliceOf(rt)).Interface()
 			// get data
@@ -103,6 +120,7 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 			if e != nil {
 				return nil, e
 			}
+
 			// get count
 			cmd := dbflex.From(mdl.TableName())
 			if parm != nil && parm.Where != nil {
@@ -134,6 +152,23 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 			parm = combineQueryParamFromCtx(parm, ctx)
 			mdl := reflect.New(rt).Interface().(orm.DataModel)
 			dest := reflect.New(reflect.SliceOf(rt)).Interface()
+
+			//-- check if it is a http request and has query
+			if hr, ok := ctx.Data().Get("http_request", nil).(*http.Request); ok {
+				queryValues := hr.URL.Query()
+				fs := []*dbflex.Filter{}
+				for k, vs := range queryValues {
+					if len(vs) > 0 {
+						fs = append(fs, dbflex.Eq(k, vs[0]))
+					}
+				}
+				if len(fs) == 1 {
+					parm = combineQueryParam(parm, dbflex.NewQueryParam().SetWhere(fs[0]))
+				} else if len(fs) > 1 {
+					parm = combineQueryParam(parm, dbflex.NewQueryParam().SetWhere(dbflex.And(fs...)))
+				}
+			}
+
 			// get data
 			e := h.Gets(mdl, parm, dest)
 			if e != nil {
