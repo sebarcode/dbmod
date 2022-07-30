@@ -36,7 +36,7 @@ func (m *mod) getHub(ctx *kaos.Context) *datahub.Hub {
 	return m.hubFn(ctx)
 }
 
-func (m *mod) SetHubName(fn func(ctx *kaos.Context) *datahub.Hub) {
+func (m *mod) SetHubFn(fn func(ctx *kaos.Context) *datahub.Hub) {
 	m.hubFn = fn
 }
 
