@@ -6,12 +6,16 @@ import (
 )
 
 const (
-	QueryParamTag = "mdb-query-parm"
-	ValidateTag   = "mdb-validate"
-	ValidateFnTag = "mdb-validate-fn"
+	QueryParamTag = "mdb_query_parm"
+	ValidateTag   = "mdb_validate"
+	ValidateFnTag = "mdb_validate_fn"
 )
 
 func combineQueryParamFromCtx(origin *dbflex.QueryParam, ctx *kaos.Context) *dbflex.QueryParam {
+	if origin == nil {
+		origin = dbflex.NewQueryParam()
+	}
+
 	if ctx.Data().Get(QueryParamTag, nil) != nil {
 		other := ctx.Data().Get(QueryParamTag, dbflex.NewQueryParam()).(*dbflex.QueryParam)
 		return combineQueryParam(origin, other)
