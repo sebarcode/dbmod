@@ -107,11 +107,11 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 		sr = new(kaos.ServiceRoute)
 		sr.Path = filepath.Join(svc.BasePoint(), alias, "gets")
 		sr.Path = strings.Replace(sr.Path, "\\", "/", -1)
-		sr.RequestType = reflect.TypeOf(new(dbflex.QueryParam))
+		sr.RequestType = reflect.TypeOf(dbflex.NewQueryParam())
 		sr.ResponseType = reflect.PtrTo(reflect.SliceOf(rt))
-		sr.Fn = reflect.ValueOf(func(ctx *kaos.Context, parm *dbflex.QueryParam) (interface{}, error) {
+		sr.Fn = reflect.ValueOf(func(ctx *kaos.Context, payload *dbflex.QueryParam) (interface{}, error) {
 			h := m.getHub(ctx)
-			parm = combineQueryParamFromCtx(parm, ctx)
+			parm := combineQueryParamFromCtx(payload, ctx)
 
 			// if from http request and has query
 			if hr, ok := ctx.Data().Get("http_request", nil).(*http.Request); ok {
@@ -164,8 +164,8 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 		sr.Path = strings.Replace(sr.Path, "\\", "/", -1)
 		sr.RequestType = reflect.TypeOf(new(dbflex.QueryParam))
 		sr.ResponseType = reflect.PtrTo(reflect.SliceOf(rt))
-		sr.Fn = reflect.ValueOf(func(ctx *kaos.Context, parm *dbflex.QueryParam) (interface{}, error) {
-			parm = combineQueryParamFromCtx(parm, ctx)
+		sr.Fn = reflect.ValueOf(func(ctx *kaos.Context, payload *dbflex.QueryParam) (interface{}, error) {
+			parm := combineQueryParamFromCtx(payload, ctx)
 			mdl := reflect.New(rt).Interface().(orm.DataModel)
 			dest := reflect.New(reflect.SliceOf(rt)).Interface()
 
@@ -362,6 +362,23 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 				return dm, e
 			}
 			return dm, e
+		})
+		routes = append(routes, sr)
+	}
+
+	//-- updateField
+	if !codekit.HasMember(disabledRoutes, "fieldUpdate") {
+		sr = new(kaos.ServiceRoute)
+		sr.Path = filepath.Join(svc.BasePoint(), alias, "fieldUpdate")
+		sr.Path = strings.Replace(sr.Path, "\\", "/", -1)
+		sr.RequestType = reflect.TypeOf(&UpdateFieldRequest{})
+		sr.ResponseType = reflect.TypeOf(codekit.M{})
+		sr.Fn = reflect.ValueOf(func(ctx *kaos.Context, payload *UpdateFieldRequest) (codekit.M, error) {
+			h := m.getHub(ctx)
+			obj := payload.Model
+			tableName := model.Model.(orm.DataModel).TableName()
+			e := h.UpdateAny(tableName, dbflex.Eq("_id", obj.GetString("_id")), obj, payload.Fields...)
+			return obj, e
 		})
 		routes = append(routes, sr)
 	}
