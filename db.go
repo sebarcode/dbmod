@@ -145,11 +145,15 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 
 			//cmd.Select("count(*) as RecordCount")
 			recordCount := 0
-			connIdx, conn, err := h.GetConnection()
-			if err == nil {
-				defer h.CloseConnection(connIdx, conn)
-				recordCount = conn.Cursor(cmd, nil).Count()
+			noCount := payload.Param.GetBool("NoCount")
+			if !noCount {
+				connIdx, conn, err := h.GetConnection()
+				if err == nil {
+					defer h.CloseConnection(connIdx, conn)
+					recordCount = conn.Cursor(cmd, nil).Count()
+				}
 			}
+
 			m := codekit.M{}.Set("data", dest).Set("count", recordCount)
 			model.CallHook("PostGets", ctx, m)
 			return m, nil
