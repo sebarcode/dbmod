@@ -371,9 +371,9 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 	}
 
 	//-- updateField
-	if !codekit.HasMember(disabledRoutes, "fieldUpdate") {
+	if !codekit.HasMember(disabledRoutes, "fieldupdate") {
 		sr = new(kaos.ServiceRoute)
-		sr.Path = filepath.Join(svc.BasePoint(), alias, "fieldUpdate")
+		sr.Path = filepath.Join(svc.BasePoint(), alias, "fieldupdate")
 		sr.Path = strings.Replace(sr.Path, "\\", "/", -1)
 		sr.RequestType = reflect.TypeOf(&UpdateFieldRequest{})
 		sr.ResponseType = reflect.TypeOf(codekit.M{})
