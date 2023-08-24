@@ -78,13 +78,6 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 	rt := model.ModelType
 	alias := model.Name
 
-	/*
-		h, e := svc.GetDataHub(model.HubName())
-		if e != nil {
-			return routes, e
-		}
-	*/
-
 	var sr *kaos.ServiceRoute
 	disabledRoutes := model.DisableRoutes()
 

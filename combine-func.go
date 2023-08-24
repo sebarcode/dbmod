@@ -1,7 +1,9 @@
 package dbmod
 
 import (
+	"reflect"
 	"strings"
+	"time"
 
 	"git.kanosolution.net/kano/dbflex"
 	"git.kanosolution.net/kano/kaos"
@@ -78,6 +80,10 @@ func combineQueryParamFromCtx(origin *dbflex.QueryParam, ctx *kaos.Context) *dbf
 		origin = dbflex.NewQueryParam()
 	}
 
+	if origin.Where != nil {
+		filterString2Date(origin.Where)
+	}
+
 	if ctx.Data().Get(QueryParamTag, nil) != nil {
 		other := ctx.Data().Get(QueryParamTag, dbflex.NewQueryParam()).(*dbflex.QueryParam)
 		return combineQueryParam(origin, other)
@@ -136,6 +142,9 @@ func combineFilterFromCtx(origin *dbflex.Filter, ctx *kaos.Context) *dbflex.Filt
 }
 
 func combineFilter(origin, other *dbflex.Filter) *dbflex.Filter {
+	origin = filterString2Date(origin)
+	other = filterString2Date(other)
+
 	if origin == nil {
 		if other != nil {
 			return other
@@ -148,4 +157,31 @@ func combineFilter(origin, other *dbflex.Filter) *dbflex.Filter {
 	}
 
 	return dbflex.And(origin, other)
+}
+
+func filterString2Date(f *dbflex.Filter) *dbflex.Filter {
+	if f == nil {
+		return f
+	}
+
+	if f.Op == dbflex.OpAnd || f.Op == dbflex.OpOr {
+		for index, itemF := range f.Items {
+			itemF = filterString2Date(itemF)
+			f.Items[index] = itemF
+		}
+		return f
+	}
+
+	vf := reflect.ValueOf(f.Value)
+	if vf.Kind() == reflect.Ptr {
+		vf = vf.Elem()
+	}
+
+	if vf.Kind() == reflect.String {
+		if dt, err := time.Parse(time.RFC3339, vf.String()); err == nil {
+			f.Value = dt
+		}
+	}
+
+	return f
 }
