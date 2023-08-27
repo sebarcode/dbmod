@@ -228,6 +228,11 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 		sr.RequestType = reflect.TypeOf(model.Model)
 		sr.ResponseType = reflect.TypeOf(model.Model)
 		sr.Fn = reflect.ValueOf(func(ctx *kaos.Context, dm orm.DataModel) (orm.DataModel, error) {
+			fields := []string{}
+			if vFields, has := ctx.Data().Data()["Fields"]; has {
+				fields = append(fields, vFields.([]string)...)
+			}
+
 			h := m.getHub(ctx)
 			var (
 				e  error
@@ -262,7 +267,7 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 			if e = model.CallHook("PreSave", ctx, dm); e != nil {
 				return dm, e
 			}
-			if e = tx.Save(dm); e != nil {
+			if e = tx.Save(dm, fields...); e != nil {
 				return dm, e
 			}
 			if e = model.CallHook("PostSave", ctx, dm); e != nil {
@@ -326,6 +331,11 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 		sr.RequestType = reflect.TypeOf(model.Model)
 		sr.ResponseType = reflect.TypeOf(model.Model)
 		sr.Fn = reflect.ValueOf(func(ctx *kaos.Context, dm orm.DataModel) (orm.DataModel, error) {
+			fields := []string{}
+			if vFields, has := ctx.Data().Data()["Fields"]; has {
+				fields = append(fields, vFields.([]string)...)
+			}
+
 			h := m.getHub(ctx)
 
 			var (
@@ -352,7 +362,7 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 			if e = model.CallHook("PreSave", ctx, dm); e != nil {
 				return dm, e
 			}
-			if e = tx.Update(dm); e != nil {
+			if e = tx.Update(dm, fields...); e != nil {
 				return dm, e
 			}
 			if e = model.CallHook("PostSave", ctx, dm); e != nil {
