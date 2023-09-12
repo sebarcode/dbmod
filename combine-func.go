@@ -2,12 +2,10 @@ package dbmod
 
 import (
 	"reflect"
-	"strings"
 	"time"
 
 	"git.kanosolution.net/kano/dbflex"
 	"git.kanosolution.net/kano/kaos"
-	"github.com/sebarcode/codekit"
 )
 
 const (
@@ -15,65 +13,6 @@ const (
 	ValidateTag   = "mdb_validate"
 	ValidateFnTag = "mdb_validate_fn"
 )
-
-func mToQueryParam(m *codekit.M) *dbflex.QueryParam {
-	if m == nil {
-		return dbflex.NewQueryParam()
-	}
-
-	res := dbflex.NewQueryParam()
-	filters := []*dbflex.Filter{}
-	for k, v := range *m {
-		lowerK := strings.ToLower(k)
-		switch lowerK {
-		case "select":
-			if fields, ok := v.([]string); ok {
-				res.SetSelect(fields...)
-			}
-
-		case "group":
-			if fields, ok := v.([]string); ok {
-				res.SetGroupBy(fields...)
-			}
-
-		case "sort":
-			if fields, ok := v.([]string); ok {
-				res.SetSort(fields...)
-			}
-
-		case "skip":
-			if skip, ok := v.(int); ok {
-				res.SetSkip(skip)
-			}
-
-		case "take":
-			if take, ok := v.(int); ok {
-				res.SetTake(take)
-			}
-
-		case "where":
-			if where, ok := v.(dbflex.Filter); ok {
-				filters = append(filters, &where)
-			}
-
-		case "aggr":
-			if aggrs, ok := v.([]*dbflex.AggrItem); ok {
-				res.SetAggr(aggrs...)
-			}
-
-		default:
-			filters = append(filters, dbflex.Eq(k, v))
-		}
-	}
-
-	if len(filters) == 1 {
-		res.SetWhere(filters[0])
-	} else if len(filters) > 1 {
-		res.SetWhere(dbflex.And(filters...))
-	}
-
-	return res
-}
 
 func combineQueryParamFromCtx(origin *dbflex.QueryParam, ctx *kaos.Context) *dbflex.QueryParam {
 	if origin == nil {

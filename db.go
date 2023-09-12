@@ -107,7 +107,7 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 			parm := combineQueryParamFromCtx(payload, ctx)
 
 			// setup filter from data's context
-			fs := ctx.Data().Get("Filter", []*dbflex.Filter{}).([]*dbflex.Filter)
+			fs := ctx.Data().Get("DBModFilter", []*dbflex.Filter{}).([]*dbflex.Filter)
 
 			// if from http request and has query
 			if hr, ok := ctx.Data().Get("http_request", nil).(*http.Request); ok {
@@ -169,7 +169,7 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 			dest := reflect.New(reflect.SliceOf(rt)).Interface()
 
 			// setup filter from data's context
-			fs := ctx.Data().Get("Filter", []*dbflex.Filter{}).([]*dbflex.Filter)
+			fs := ctx.Data().Get("DBModFilter", []*dbflex.Filter{}).([]*dbflex.Filter)
 
 			//-- check if it is a http request and has query
 			if hr, ok := ctx.Data().Get("http_request", nil).(*http.Request); ok {
@@ -217,7 +217,7 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 			}
 
 			// get filter from context
-			ctxFilters := ctx.Data().Get("Filter", []*dbflex.Filter{}).([]*dbflex.Filter)
+			ctxFilters := ctx.Data().Get("DBModFilter", []*dbflex.Filter{}).([]*dbflex.Filter)
 			filter = append(filter, ctxFilters...)
 
 			var e error
@@ -252,11 +252,6 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 		sr.RequestType = reflect.TypeOf(model.Model)
 		sr.ResponseType = reflect.TypeOf(model.Model)
 		sr.Fn = reflect.ValueOf(func(ctx *kaos.Context, dm orm.DataModel) (orm.DataModel, error) {
-			fields := []string{}
-			if vFields, has := ctx.Data().Data()["Fields"]; has {
-				fields = append(fields, vFields.([]string)...)
-			}
-
 			h := m.getHub(ctx)
 			var (
 				e  error
@@ -361,11 +356,6 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 		sr.RequestType = reflect.TypeOf(model.Model)
 		sr.ResponseType = reflect.TypeOf(model.Model)
 		sr.Fn = reflect.ValueOf(func(ctx *kaos.Context, dm orm.DataModel) (orm.DataModel, error) {
-			fields := []string{}
-			if vFields, has := ctx.Data().Data()["Fields"]; has {
-				fields = append(fields, vFields.([]string)...)
-			}
-
 			h := m.getHub(ctx)
 
 			var (
@@ -420,7 +410,7 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 			h := m.getHub(ctx)
 			obj := payload.Model
 			filters := []*dbflex.Filter{dbflex.Eq("_id", obj.GetString("_id"))}
-			ctxFilters := ctx.Data().Get("Filter", []*dbflex.Filter{}).([]*dbflex.Filter)
+			ctxFilters := ctx.Data().Get("DBModFilter", []*dbflex.Filter{}).([]*dbflex.Filter)
 			if len(ctxFilters) > 0 {
 				filters = append(filters, ctxFilters...)
 			}
