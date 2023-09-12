@@ -106,10 +106,12 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 			h := m.getHub(ctx)
 			parm := combineQueryParamFromCtx(payload, ctx)
 
+			// setup filter from data's context
+			fs := ctx.Data().Get("Filter", []*dbflex.Filter{}).([]*dbflex.Filter)
+
 			// if from http request and has query
 			if hr, ok := ctx.Data().Get("http_request", nil).(*http.Request); ok {
 				queryValues := hr.URL.Query()
-				fs := []*dbflex.Filter{}
 				for k, vs := range queryValues {
 					if len(vs) > 0 {
 						fs = append(fs, dbflex.Eq(k, vs[0]))
@@ -166,10 +168,12 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 			mdl := reflect.New(rt).Interface().(orm.DataModel)
 			dest := reflect.New(reflect.SliceOf(rt)).Interface()
 
+			// setup filter from data's context
+			fs := ctx.Data().Get("Filter", []*dbflex.Filter{}).([]*dbflex.Filter)
+
 			//-- check if it is a http request and has query
 			if hr, ok := ctx.Data().Get("http_request", nil).(*http.Request); ok {
 				queryValues := hr.URL.Query()
-				fs := []*dbflex.Filter{}
 				for k, vs := range queryValues {
 					if len(vs) > 0 {
 						fs = append(fs, dbflex.Eq(k, vs[0]))
@@ -204,7 +208,27 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 		sr.Fn = reflect.ValueOf(func(ctx *kaos.Context, keys []interface{}) (orm.DataModel, error) {
 			h := m.getHub(ctx)
 			dm := getDataModel(model)
-			e := h.GetByID(dm, keys...)
+
+			// build filter
+			idFields, _ := dm.GetID(nil)
+			filter := []*dbflex.Filter{}
+			for idx, idField := range idFields {
+				filter = append(filter, dbflex.Eq(idField, keys[idx]))
+			}
+
+			// get filter from context
+			ctxFilters := ctx.Data().Get("Filter", []*dbflex.Filter{}).([]*dbflex.Filter)
+			filter = append(filter, ctxFilters...)
+
+			var e error
+			if len(filter) == 1 {
+				e = h.GetByFilter(dm, filter[0])
+			} else if len(filter) > 1 {
+				e = h.GetByFilter(dm, dbflex.And(filter...))
+			}
+			if e != nil {
+				return dm, e
+			}
 
 			if ctx.Data().Get(ValidateTag, false).(bool) {
 				fn := ctx.Data().Get(ValidateFnTag, func(codekit.M) bool { return false }).(func(codekit.M) bool)
@@ -267,7 +291,13 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 			if e = model.CallHook("PreSave", ctx, dm); e != nil {
 				return dm, e
 			}
-			if e = tx.Save(dm, fields...); e != nil {
+			fields := ctx.Data().Get("Fields", []string{}).([]string)
+			if len(fields) == 0 {
+				e = tx.Save(dm)
+			} else {
+				e = tx.Save(dm, fields...)
+			}
+			if e != nil {
 				return dm, e
 			}
 			if e = model.CallHook("PostSave", ctx, dm); e != nil {
@@ -362,7 +392,13 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 			if e = model.CallHook("PreSave", ctx, dm); e != nil {
 				return dm, e
 			}
-			if e = tx.Update(dm, fields...); e != nil {
+			fields := ctx.Data().Get("Fields", []string{}).([]string)
+			if len(fields) == 0 {
+				e = tx.Update(dm)
+			} else {
+				e = tx.Update(dm, fields...)
+			}
+			if e != nil {
 				return dm, e
 			}
 			if e = model.CallHook("PostSave", ctx, dm); e != nil {
@@ -383,8 +419,13 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 		sr.Fn = reflect.ValueOf(func(ctx *kaos.Context, payload *UpdateFieldRequest) (codekit.M, error) {
 			h := m.getHub(ctx)
 			obj := payload.Model
+			filters := []*dbflex.Filter{dbflex.Eq("_id", obj.GetString("_id"))}
+			ctxFilters := ctx.Data().Get("Filter", []*dbflex.Filter{}).([]*dbflex.Filter)
+			if len(ctxFilters) > 0 {
+				filters = append(filters, ctxFilters...)
+			}
 			tableName := model.Model.(orm.DataModel).TableName()
-			e := h.UpdateAny(tableName, dbflex.Eq("_id", obj.GetString("_id")), obj, payload.Fields...)
+			e := h.UpdateAny(tableName, dbflex.And(filters...), obj, payload.Fields...)
 			return obj, e
 		})
 		routes = append(routes, sr)
