@@ -101,7 +101,7 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 		sr.Path = filepath.Join(svc.BasePoint(), alias, "gets")
 		sr.Path = strings.Replace(sr.Path, "\\", "/", -1)
 		sr.RequestType = reflect.TypeOf(dbflex.NewQueryParam())
-		sr.ResponseType = reflect.PtrTo(reflect.SliceOf(rt))
+		sr.ResponseType = reflect.PointerTo(reflect.SliceOf(rt))
 		sr.Fn = reflect.ValueOf(func(ctx *kaos.Context, payload *dbflex.QueryParam) (interface{}, error) {
 			h := m.getHub(ctx)
 			parm := combineQueryParamFromCtx(payload, ctx)
@@ -126,6 +126,7 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 
 			mdl := reflect.New(rt).Interface().(orm.DataModel)
 			dest := reflect.New(reflect.SliceOf(rt)).Interface()
+
 			// get data
 			e := h.Gets(mdl, parm, dest)
 			if e != nil {
@@ -133,7 +134,7 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 			}
 
 			// get count
-			cmd := dbflex.From(mdl.TableName())
+			cmd := dbflex.From(mdl.TableName()).Select("_id")
 			if parm != nil && parm.Where != nil {
 				cmd.Where(parm.Where)
 			}
