@@ -86,7 +86,7 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 		sr = new(kaos.ServiceRoute)
 		sr.Path = filepath.Join(svc.BasePoint(), alias, "new")
 		sr.Path = strings.Replace(sr.Path, "\\", "/", -1)
-		sr.ResponseType = reflect.PtrTo(reflect.SliceOf(rt))
+		sr.ResponseType = reflect.PointerTo(reflect.SliceOf(rt))
 		sr.Fn = reflect.ValueOf(func(ctx *kaos.Context, parm *codekit.M) (interface{}, error) {
 			mdl := reflect.New(rt).Interface().(orm.DataModel)
 			model.CallHook("PreNew", ctx, mdl)
