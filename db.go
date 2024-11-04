@@ -294,7 +294,7 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 				e = tx.Save(dm, fields...)
 			}
 			if e != nil {
-				return dm, e
+				return dm, ctx.Log().Error2("error when save data", "save error: %s", e.Error())
 			}
 			if e = model.CallHook("PostSave", ctx, dm); e != nil {
 				return dm, e
