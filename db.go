@@ -183,8 +183,15 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 			if hr, ok := ctx.Data().Get("http_request", nil).(*http.Request); ok {
 				queryValues := hr.URL.Query()
 				for k, vs := range queryValues {
-					if len(vs) > 0 {
+					lvs := len(vs)
+					if lvs == 1 {
 						fs = append(fs, dbflex.Eq(k, vs[0]))
+					} else if lvs > 1 {
+						values := make([]interface{}, lvs)
+						for i := 0; i < lvs; i++ {
+							values[i] = vs[i]
+						}
+						fs = append(fs, dbflex.In(k, values...))
 					}
 				}
 				if len(fs) == 1 {
