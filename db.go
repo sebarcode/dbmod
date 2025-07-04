@@ -103,6 +103,9 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 		sr.RequestType = reflect.TypeOf(dbflex.NewQueryParam())
 		sr.ResponseType = reflect.PointerTo(reflect.SliceOf(rt))
 		sr.Fn = reflect.ValueOf(func(ctx *kaos.Context, payload *dbflex.QueryParam) (interface{}, error) {
+			if payload == nil {
+				payload = dbflex.NewQueryParam()
+			}
 			h := m.getHub(ctx)
 			parm := combineQueryParamFromCtx(payload, ctx)
 
@@ -153,7 +156,9 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 				connIdx, conn, err := h.GetConnection()
 				if err == nil {
 					defer h.CloseConnection(connIdx, conn)
-					recordCount = conn.Cursor(cmd, nil).Count()
+					cursor := conn.Cursor(cmd, nil)
+					recordCount = cursor.Count()
+					cursor.Close()
 				}
 			}
 

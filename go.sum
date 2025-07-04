@@ -59,6 +59,8 @@ git.kanosolution.net/kano/appkit v0.0.3/go.mod h1:R9lSLmv987MZYIcmW5QRFySaEGASi/
 git.kanosolution.net/kano/dbflex v1.2.5/go.mod h1:FQZKWzBpYXNalY8syaXBjVBXyg58hIuUXQuIB08l7Zw=
 git.kanosolution.net/kano/dbflex v1.2.8 h1:ubI/4vdC8UiIQypqWKR+xk5zeHAHa/e3Mzoc4MrNrGY=
 git.kanosolution.net/kano/dbflex v1.2.8/go.mod h1:FQZKWzBpYXNalY8syaXBjVBXyg58hIuUXQuIB08l7Zw=
+git.kanosolution.net/kano/dbflex v1.3.1 h1:tCSrKT9oA+ZJ4wOjjFQN5h+2NE/4re4fas1vsBZnPwA=
+git.kanosolution.net/kano/dbflex v1.3.1/go.mod h1:mqgrdJe4IIfuLOMf1qj5kJUkL2ckiQ3XcA8LFQfE9k4=
 git.kanosolution.net/kano/kaos v0.3.8 h1:HAmhIESBFNwLoG6zLfCSHYmM89B+qXLts6KW8FL5C+Y=
 git.kanosolution.net/kano/kaos v0.3.8/go.mod h1:7GaksGLTQvH23Ee6kOI41F9v1cc4b8e17pw2d9h0jLw=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
@@ -75,6 +77,8 @@ github.com/ariefdarmawan/byter v0.0.2 h1:hZsg3P7pi+CDZbEtL7Y+ZJDgJNTIkGLRIvIe+Ni
 github.com/ariefdarmawan/byter v0.0.2/go.mod h1:0CaYwyUDoab6UBmN5mdDBLmIBiqMiJv+OrTGblCMLdk=
 github.com/ariefdarmawan/datahub v0.2.6 h1:D2B5s4AHTa8On4sQxpYOI5ZUr8XgCl4ey+PjUoKb5EI=
 github.com/ariefdarmawan/datahub v0.2.6/go.mod h1:0bG0M9n8BKybu0o5aScuD/S4CMl3cIXbfEZi71Yf9mc=
+github.com/ariefdarmawan/datahub v0.3.3-0.20250704085709-97269e66c8c2 h1:EXByeZlHsRodj66fLK+BvVplgbNCoC7mmfXC7/xvi/c=
+github.com/ariefdarmawan/datahub v0.3.3-0.20250704085709-97269e66c8c2/go.mod h1:1e/ePpqulvRcPPu1CuQrUbjB5fwITr6kPMX4++XQb88=
 github.com/ariefdarmawan/reflector v0.0.3 h1:qbfwP5iKMvdYBWRG2jZyoXRLPsGedJ1sNcC8bw+MhpY=
 github.com/ariefdarmawan/reflector v0.0.3/go.mod h1:xxeY7n6iT0q5pK4j3s8l2xo1CvmQgS2oYtj0lsV4eo4=
 github.com/ariefdarmawan/serde v0.1.0 h1:gVml1PZbomom4+gLcvM8k86PW05VWTy3EM7NaMBzPR8=
@@ -218,6 +222,8 @@ github.com/google/pprof v0.0.0-20210609004039-a478d1d731e9/go.mod h1:kpwsk12EmLe
 github.com/google/pprof v0.0.0-20210720184732-4bb14d4b1be1/go.mod h1:kpwsk12EmLew5upagYY7GY0pfYCcupk39gWOCRROcvE=
 github.com/google/renameio v0.1.0/go.mod h1:KWCgfxg9yswjAJkECMjeO8J8rahYeXnNhOm40UhjYkI=
 github.com/google/uuid v1.1.2/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
+github.com/google/uuid v1.3.0 h1:t6JiXgmwXMjEs8VusXIJk2BXHsn+wx8BZdTaoZ5fu7I=
+github.com/google/uuid v1.3.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/googleapis/gax-go/v2 v2.0.4/go.mod h1:0Wqv26UfaUD9n4G6kQubkQ+KchISgw+vpHVxEJEs9eg=
 github.com/googleapis/gax-go/v2 v2.0.5/go.mod h1:DWXyrwAJ9X0FpwwEdw+IPEYBICEFu5mhpdKc/us6bOk=
 github.com/googleapis/gax-go/v2 v2.1.0/go.mod h1:Q3nei7sK6ybPYH7twZdmQpAd1MKb7pfu6SK+H1/DsU0=

@@ -7,9 +7,9 @@ go 1.19
 //replace git.kanosolution.net/koloni/crowd => git.kanosolution.net/koloni/crowd v0.1.1
 
 require (
-	git.kanosolution.net/kano/dbflex v1.2.8
+	git.kanosolution.net/kano/dbflex v1.3.1
 	git.kanosolution.net/kano/kaos v0.3.8
-	github.com/ariefdarmawan/datahub v0.2.6
+	github.com/ariefdarmawan/datahub v0.3.3-0.20250704085709-97269e66c8c2
 	github.com/ariefdarmawan/serde v0.1.0
 	github.com/sebarcode/codekit v0.1.2
 )
@@ -20,6 +20,7 @@ require (
 	github.com/ariefdarmawan/reflector v0.0.3 // indirect
 	github.com/eaciit/toolkit v0.0.0-20210610161449-593d5fadf78e // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
+	github.com/google/uuid v1.3.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/logrusorgru/aurora v2.0.3+incompatible // indirect
 	github.com/magiconair/properties v1.8.6 // indirect
