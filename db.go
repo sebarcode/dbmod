@@ -103,9 +103,6 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 		sr.RequestType = reflect.TypeOf(dbflex.NewQueryParam())
 		sr.ResponseType = reflect.PointerTo(reflect.SliceOf(rt))
 		sr.Fn = reflect.ValueOf(func(ctx *kaos.Context, payload *dbflex.QueryParam) (interface{}, error) {
-			if payload == nil {
-				payload = dbflex.NewQueryParam()
-			}
 			h := m.getHub(ctx)
 			parm := combineQueryParamFromCtx(payload, ctx)
 
@@ -116,15 +113,8 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 			if hr, ok := ctx.Data().Get("http_request", nil).(*http.Request); ok {
 				queryValues := hr.URL.Query()
 				for k, vs := range queryValues {
-					lvs := len(vs)
-					if lvs == 1 {
+					if len(vs) > 0 {
 						fs = append(fs, dbflex.Eq(k, vs[0]))
-					} else if lvs > 1 {
-						values := make([]interface{}, lvs)
-						for i := 0; i < lvs; i++ {
-							values[i] = vs[i]
-						}
-						fs = append(fs, dbflex.In(k, values...))
 					}
 				}
 				if len(fs) == 1 {
@@ -151,14 +141,15 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 
 			//cmd.Select("count(*) as RecordCount")
 			recordCount := 0
-			noCount := payload.Param.GetBool("NoCount")
+			noCount := false
+			if parm.Param != nil {
+				noCount = parm.Param.Get("noCount", false).(bool)
+			}
 			if !noCount {
 				connIdx, conn, err := h.GetConnection()
 				if err == nil {
 					defer h.CloseConnection(connIdx, conn)
-					cursor := conn.Cursor(cmd, nil)
-					recordCount = cursor.Count()
-					cursor.Close()
+					recordCount = conn.Cursor(cmd, nil).Count()
 				}
 			}
 
@@ -175,7 +166,7 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 		sr.Path = filepath.Join(svc.BasePoint(), alias, "find")
 		sr.Path = strings.Replace(sr.Path, "\\", "/", -1)
 		sr.RequestType = reflect.TypeOf(new(dbflex.QueryParam))
-		sr.ResponseType = reflect.PtrTo(reflect.SliceOf(rt))
+		sr.ResponseType = reflect.PointerTo(reflect.SliceOf(rt))
 		sr.Fn = reflect.ValueOf(func(ctx *kaos.Context, payload *dbflex.QueryParam) (interface{}, error) {
 			parm := combineQueryParamFromCtx(payload, ctx)
 			mdl := reflect.New(rt).Interface().(orm.DataModel)
@@ -188,15 +179,8 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 			if hr, ok := ctx.Data().Get("http_request", nil).(*http.Request); ok {
 				queryValues := hr.URL.Query()
 				for k, vs := range queryValues {
-					lvs := len(vs)
-					if lvs == 1 {
+					if len(vs) > 0 {
 						fs = append(fs, dbflex.Eq(k, vs[0]))
-					} else if lvs > 1 {
-						values := make([]interface{}, lvs)
-						for i := 0; i < lvs; i++ {
-							values[i] = vs[i]
-						}
-						fs = append(fs, dbflex.In(k, values...))
 					}
 				}
 				if len(fs) == 1 {
@@ -224,7 +208,7 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 		sr.Path = filepath.Join(svc.BasePoint(), alias, "get")
 		sr.Path = strings.Replace(sr.Path, "\\", "/", -1)
 		sr.RequestType = reflect.TypeOf([]interface{}{})
-		sr.ResponseType = reflect.TypeOf(reflect.PtrTo(rt))
+		sr.ResponseType = reflect.TypeOf(reflect.PointerTo(rt))
 		sr.Fn = reflect.ValueOf(func(ctx *kaos.Context, keys []interface{}) (orm.DataModel, error) {
 			h := m.getHub(ctx)
 			dm := getDataModel(model)
@@ -567,7 +551,7 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 			sr.Path = filepath.Join(svc.BasePoint(), alias, getName)
 			sr.Path = strings.Replace(sr.Path, "\\", "/", -1)
 			sr.RequestType = reflect.TypeOf(codekit.M{})
-			sr.ResponseType = reflect.TypeOf(reflect.PtrTo(rt))
+			sr.ResponseType = reflect.TypeOf(reflect.PointerTo(rt))
 			sr.Fn = reflect.ValueOf(func(ctx *kaos.Context, param codekit.M) (orm.DataModel, error) {
 				h := m.getHub(ctx)
 
@@ -583,7 +567,7 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 			sr.Path = filepath.Join(svc.BasePoint(), alias, getsName)
 			sr.Path = strings.Replace(sr.Path, "\\", "/", -1)
 			sr.RequestType = reflect.TypeOf(codekit.M{})
-			sr.ResponseType = reflect.PtrTo(reflect.SliceOf(rt))
+			sr.ResponseType = reflect.PointerTo(reflect.SliceOf(rt))
 			sr.Fn = reflect.ValueOf(func(ctx *kaos.Context, param codekit.M) (interface{}, error) {
 				h := m.getHub(ctx)
 
@@ -611,7 +595,7 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 			sr.Path = filepath.Join(svc.BasePoint(), alias, findName)
 			sr.Path = strings.Replace(sr.Path, "\\", "/", -1)
 			sr.RequestType = reflect.TypeOf(codekit.M{})
-			sr.ResponseType = reflect.PtrTo(reflect.SliceOf(rt))
+			sr.ResponseType = reflect.PointerTo(reflect.SliceOf(rt))
 			sr.Fn = reflect.ValueOf(func(ctx *kaos.Context, parm codekit.M) (interface{}, error) {
 				h := m.getHub(ctx)
 
