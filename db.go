@@ -146,10 +146,16 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 				noCount = parm.Param.Get("noCount", false).(bool)
 			}
 			if !noCount {
-				connIdx, conn, err := h.GetConnection()
+				conn, err := h.GetClassicConnection()
 				if err == nil {
-					defer h.CloseConnection(connIdx, conn)
-					recordCount = conn.Cursor(cmd, nil).Count()
+					func() {
+						cursorCount := conn.Cursor(cmd, nil)
+						defer cursorCount.Close()
+						defer func() {
+							conn.Close()
+						}()
+						recordCount = cursorCount.Count()
+					}()
 				}
 			}
 
