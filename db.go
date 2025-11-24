@@ -107,21 +107,25 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 			parm := combineQueryParamFromCtx(payload, ctx)
 
 			// setup filter from data's context
-			fs := ctx.Data().Get("DBModFilter", []*dbflex.Filter{}).([]*dbflex.Filter)
+			whereFields, _ := ctx.Data().Get("DbModFilter", []*dbflex.Filter{}).([]*dbflex.Filter)
+			selectFields, _ := ctx.Data().Get("DbModSelect", []string{}).([]string)
 
 			// if from http request and has query
 			if hr, ok := ctx.Data().Get("http_request", nil).(*http.Request); ok {
 				queryValues := hr.URL.Query()
 				for k, vs := range queryValues {
 					if len(vs) > 0 {
-						fs = append(fs, dbflex.Eq(k, vs[0]))
+						whereFields = append(whereFields, dbflex.Eq(k, vs[0]))
 					}
 				}
-				if len(fs) == 1 {
-					parm = combineQueryParam(parm, dbflex.NewQueryParam().SetWhere(fs[0]))
-				} else if len(fs) > 1 {
-					parm = combineQueryParam(parm, dbflex.NewQueryParam().SetWhere(dbflex.And(fs...)))
+				if len(whereFields) == 1 {
+					parm = combineQueryParam(parm, dbflex.NewQueryParam().SetWhere(whereFields[0]))
+				} else if len(whereFields) > 1 {
+					parm = combineQueryParam(parm, dbflex.NewQueryParam().SetWhere(dbflex.And(whereFields...)))
 				}
+			}
+			if len(selectFields) > 0 {
+				parm.SetSelect(selectFields...)
 			}
 
 			mdl := reflect.New(rt).Interface().(orm.DataModel)
@@ -179,21 +183,26 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 			dest := reflect.New(reflect.SliceOf(rt)).Interface()
 
 			// setup filter from data's context
-			fs := ctx.Data().Get("DBModFilter", []*dbflex.Filter{}).([]*dbflex.Filter)
+			whereFields, _ := ctx.Data().Get("DbModFilter", []*dbflex.Filter{}).([]*dbflex.Filter)
+			selectFields, _ := ctx.Data().Get("DbModSelect", []string{}).([]string)
 
 			//-- check if it is a http request and has query
 			if hr, ok := ctx.Data().Get("http_request", nil).(*http.Request); ok {
 				queryValues := hr.URL.Query()
 				for k, vs := range queryValues {
 					if len(vs) > 0 {
-						fs = append(fs, dbflex.Eq(k, vs[0]))
+						whereFields = append(whereFields, dbflex.Eq(k, vs[0]))
 					}
 				}
-				if len(fs) == 1 {
-					parm = combineQueryParam(parm, dbflex.NewQueryParam().SetWhere(fs[0]))
-				} else if len(fs) > 1 {
-					parm = combineQueryParam(parm, dbflex.NewQueryParam().SetWhere(dbflex.And(fs...)))
+				if len(whereFields) == 1 {
+					parm = combineQueryParam(parm, dbflex.NewQueryParam().SetWhere(whereFields[0]))
+				} else if len(whereFields) > 1 {
+					parm = combineQueryParam(parm, dbflex.NewQueryParam().SetWhere(dbflex.And(whereFields...)))
 				}
+			}
+
+			if len(selectFields) > 0 {
+				parm.SetSelect(selectFields...)
 			}
 
 			// get data
@@ -227,7 +236,7 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 			}
 
 			// get filter from context
-			ctxFilters := ctx.Data().Get("DBModFilter", []*dbflex.Filter{}).([]*dbflex.Filter)
+			ctxFilters := ctx.Data().Get("DbModFilter", []*dbflex.Filter{}).([]*dbflex.Filter)
 			filter = append(filter, ctxFilters...)
 
 			var e error
@@ -420,7 +429,7 @@ func (m *mod) MakeModelRoute(svc *kaos.Service, model *kaos.ServiceModel) ([]*ka
 			h := m.getHub(ctx)
 			obj := payload.Model
 			filters := []*dbflex.Filter{dbflex.Eq("_id", obj.GetString("_id"))}
-			ctxFilters := ctx.Data().Get("DBModFilter", []*dbflex.Filter{}).([]*dbflex.Filter)
+			ctxFilters := ctx.Data().Get("DbModFilter", []*dbflex.Filter{}).([]*dbflex.Filter)
 			if len(ctxFilters) > 0 {
 				filters = append(filters, ctxFilters...)
 			}
